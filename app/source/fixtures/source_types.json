@@ -1,0 +1,29 @@
+[
+  {
+    "model": "source.SourceType",
+    "pk": 1,
+    "fields": {
+      "name": "Twitter",
+      "created": "2025-10-08:00:00:00",
+      "updated": "2025-10-08:00:00:00"
+    }
+  },
+  {
+    "model": "source.SourceType",
+    "pk": 2,
+    "fields": {
+      "name": "Youtuber",
+      "created": "2025-10-08:00:00:00",
+      "updated": "2025-10-08:00:00:00"
+    }
+  },
+  {
+    "model": "source.SourceType",
+    "pk": 3,
+    "fields": {
+      "name": "RSS",
+      "created": "2025-10-08:00:00:00",
+      "updated": "2025-10-08:00:00:00"
+    }
+  }
+]

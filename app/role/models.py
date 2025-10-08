@@ -11,4 +11,4 @@ class Role(models.Model):
     # Additional field declarations
     is_active = models.BooleanField(default=True)
     created = models.DateTimeField(auto_now_add=True)
-    modified = models.DateTimeField(auto_now=True)
+    updated = models.DateTimeField(auto_now=True)
