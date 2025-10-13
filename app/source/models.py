@@ -1,5 +1,7 @@
 from django.db import models
 
+from app.topic.models import Topic
+
 
 # Create your models here.
 class SourceType(models.Model):
@@ -16,17 +18,17 @@ class SourceType(models.Model):
 
 
 class Source(models.Model):
-    """Model to save source type, url and user"""
+    """Model to save source type, url and topic"""
 
     # Foreign key declarations
     source_type = models.ForeignKey(SourceType,
                                     on_delete=models.CASCADE,
                                     related_name="source_type_sources",
                                     related_query_name="source_type_source")
-    user = models.ForeignKey('user.User',
-                             on_delete=models.CASCADE,
-                             related_name="user_sources",
-                             related_query_name="user_source")
+    topic = models.ForeignKey(Topic,
+                              on_delete=models.CASCADE,
+                              related_name="topic_sources",
+                              related_query_name="topic_source")
 
     # Field declarations
     name = models.CharField(max_length=100)

@@ -1,5 +1,4 @@
 from django.conf import settings
-from django.contrib.admin import ListFilter
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
@@ -12,12 +11,12 @@ from app.source.models import Source
 from app.source.serializers import SourceCreateSerializer, SourceDisplaySerializer, SourceUpdateSerializer, \
     SourceListFilterDisplaySerializer
 from app.utils import get_response_schema
-from permissions import IsUser
+from permissions import IsUser, IsSuperAdmin
 
 
 # Create your views here.
 class SourceCreateAPIView(GenericAPIView):
-    permission_classes = [IsUser]
+    permission_classes = [IsSuperAdmin]
 
     @swagger_auto_schema(
         request_body=
@@ -28,19 +27,19 @@ class SourceCreateAPIView(GenericAPIView):
                 "url": openapi.Schema(type=openapi.TYPE_STRING, description="Source url"),
                 "source_type": openapi.Schema(type=openapi.TYPE_INTEGER, description="Source type"),
                 "description": openapi.Schema(type=openapi.TYPE_STRING, description="Source description"),
+                "topic": openapi.Schema(type=openapi.TYPE_INTEGER, description="Topic id"),
             },
         )
     )
     def post(self, request):
 
-        if "name" not in request.data or "url" not in request.data or "source_type" not in request.data:
+        if "name" not in request.data or "url" not in request.data or "source_type" not in request.data or "topic" not in request.data:
             return get_response_schema(
                 {settings.REST_FRAMEWORK['NON_FIELD_ERRORS_KEY']: [ErrorMessage.MISSING_FIELDS.value]},
                 ErrorMessage.BAD_REQUEST.value,
                 status.HTTP_400_BAD_REQUEST
             )
 
-        request.data['user'] = request.user.id
 
         serializer = SourceCreateSerializer(data=request.data)
         if serializer.is_valid():
@@ -51,7 +50,7 @@ class SourceCreateAPIView(GenericAPIView):
 
 
 class SourceDetailAPIView(GenericAPIView):
-    permission_classes = [IsUser]
+    permission_classes = [IsSuperAdmin]
 
     def get_object(self, pk):
 
@@ -112,11 +111,11 @@ class SourceListFilter(ListAPIView):
     pagination_class = CustomPageNumberPagination
 
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsUser]
+    permission_classes = [IsSuperAdmin]
 
     def get_queryset(self):
 
-        source_queryset = Source.objects.select_related("source_type").filter(user_id=self.request.user.id, is_active=True).order_by("-updated")
+        source_queryset = Source.objects.select_related("source_type","topic").filter(is_active=True).order_by("-updated")
 
         # Filter by name
         name = self.request.query_params.get("name", None)
@@ -133,6 +132,11 @@ class SourceListFilter(ListAPIView):
         if source_type:
             source_queryset = source_queryset.filter(source_type_id=source_type)
 
+        # Filter by topic
+        topic = self.request.query_params.get("topic", None)
+        if topic:
+            source_queryset = source_queryset.filter(topic_id=topic)
+
         return source_queryset
 
     @swagger_auto_schema(
@@ -140,6 +144,7 @@ class SourceListFilter(ListAPIView):
             openapi.Parameter("name", openapi.IN_QUERY, description="Filter by name", type=openapi.TYPE_STRING),
             openapi.Parameter("url", openapi.IN_QUERY, description="Filter by url", type=openapi.TYPE_STRING),
             openapi.Parameter("source_type", openapi.IN_QUERY, description="Filter by source type", type=openapi.TYPE_INTEGER),
+            openapi.Parameter("topic", openapi.IN_QUERY, description="Filter by topic", type=openapi.TYPE_INTEGER),
         ]
     )
     def get(self, request, *args, **kwargs):

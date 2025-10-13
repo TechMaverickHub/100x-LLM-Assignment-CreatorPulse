@@ -1,0 +1,38 @@
+[
+    {
+        "model": "topic.Topic",
+        "pk": 1,
+        "fields": {
+            "name": "AI",
+            "created": "2025-10-08:00:00:00",
+            "updated": "2025-10-08:00:00:00"
+        }
+    },
+    {
+        "model": "topic.Topic",
+        "pk": 2,
+        "fields": {
+            "name": "Blockchain",
+            "created": "2025-10-08:00:00:00",
+            "updated": "2025-10-08:00:00:00"
+        }
+    },
+    {
+        "model": "topic.Topic",
+        "pk": 3,
+        "fields": {
+            "name": "Cybersecurity",
+            "created": "2025-10-08:00:00:00",
+            "updated": "2025-10-08:00:00:00"
+        }
+    },
+    {
+        "model": "topic.Topic",
+        "pk": 4,
+        "fields": {
+            "name": "Networking",
+            "created": "2025-10-08:00:00:00",
+            "updated": "2025-10-08:00:00:00"
+        }
+    }
+]

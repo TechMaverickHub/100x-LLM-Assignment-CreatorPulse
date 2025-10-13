@@ -30,4 +30,18 @@ class GlobalValues(int, Enum):
     SUPER_ADMIN = 1
     USER = 2
 
+class SourceTypeConstants(int, Enum):
+    TWITTER = 1
+    YOUTUBE = 2
+    RSS = 3
+    BLOG = 4
+    API = 5
+    REDDIT = 6
+    ARXIV = 7
 
+class TopicConstants(int, Enum):
+
+    AI = 1
+    BLOCKCHAIN = 2
+    CYBERSECURITY = 3
+    NETWORKING = 4
