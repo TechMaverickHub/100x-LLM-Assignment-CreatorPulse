@@ -5,6 +5,7 @@ from urllib.robotparser import RobotFileParser
 from bs4 import BeautifulSoup
 
 BASE = "https://distill.pub"
+BASE = "https://blog.tensorflow.org/"
 USER_AGENT = "MyScraperBot/1.0 (+https://example.com/contact)"
 HEADERS = {"User-Agent": USER_AGENT}
 SESSION = requests.Session()
