@@ -1,0 +1,22 @@
+{
+  "scraped_at": "2025-10-09T11:30:42.819883",
+  "method": "web_scraping",
+  "users": {
+    "OpenAI": [],
+    "AnthropicAI": [],
+    "DeepMind": [],
+    "huggingface": [],
+    "ylecun": [],
+    "karpathy": [],
+    "jeremyphoward": []
+  },
+  "hashtags": {
+    "#AI": [],
+    "#MachineLearning": [],
+    "#DeepLearning": [],
+    "#LLM": [],
+    "#GenerativeAI": [],
+    "#ChatGPT": [],
+    "#GPT4": []
+  }
+}

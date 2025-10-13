@@ -57,7 +57,8 @@ INSTALLED_APPS = [
     'app.core',
     'app.user',
     'app.role',
-    'app.source'
+    'app.source',
+    'app.scrape'
 ]
 
 MIDDLEWARE = [
