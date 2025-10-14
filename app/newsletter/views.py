@@ -1,5 +1,7 @@
-from django.db.models import F
-from django.shortcuts import render
+import os
+
+import resend
+from dotenv import load_dotenv
 from rest_framework import status
 from rest_framework.generics import GenericAPIView
 
@@ -10,14 +12,14 @@ from app.scrape.scrape_utils import scrape_api_source, scrape_reddit_source, scr
     get_trends_to_watch
 from app.source.models import Source
 from app.topic.models import UserTopic
-from app.topic.serializers import UserTopicDisplaySerializer
 from app.utils import get_response_schema
 from permissions import IsUser
+
+load_dotenv()
 
 
 # Create your views here.
 class GenerateNewsletterAPIView(GenericAPIView):
-
     permission_classes = [IsUser]
 
     def post(self, request):
@@ -30,7 +32,6 @@ class GenerateNewsletterAPIView(GenericAPIView):
             for ut in user_topic_queryset
         ]
 
-
         topics = []
         articles = []
         top_trends = []
@@ -40,19 +41,20 @@ class GenerateNewsletterAPIView(GenericAPIView):
             topics.append(item['topic_name'])
 
             # fetch urls and source_type
-            url_source_type = list(Source.objects.filter(topic_id=item["topic_id"],is_active=True).values_list("url", "source_type"))
+            url_source_type = list(
+                Source.objects.filter(topic_id=item["topic_id"], is_active=True).values_list("url", "source_type"))
 
             headers = {
                 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
             }
 
-            #scrape the news
+            # scrape the news
             for url, source_type in url_source_type:
 
                 if source_type == SourceTypeConstants.API.value:
                     articles.extend(scrape_api_source(url, headers))
                 elif source_type == SourceTypeConstants.REDDIT.value:
-                    articles.extend(scrape_reddit_source(url, headers ))
+                    articles.extend(scrape_reddit_source(url, headers))
                 elif source_type == SourceTypeConstants.ARXIV.value:
                     articles.extend(scrape_arxiv_source(url, headers))
                 elif source_type == SourceTypeConstants.RSS.value:
@@ -81,12 +83,18 @@ class GenerateNewsletterAPIView(GenericAPIView):
 
         html_content = newsletter_to_html(newsletter_content)
 
+        resend.api_key = os.getenv("RESEND_API_KEY")
+        r = resend.Emails.send({
+            "from": "onboarding@resend.dev",
+            "to": "abhiroop1998.dev@gmail.com",
+            "subject": "AI Newsletter",
+            "html": html_content
+        })
+
         return get_response_schema(html_content, SuccessMessage.RECORD_RETRIEVED.value, status.HTTP_200_OK)
 
 
-
 class GenerateTrendsAPIView(GenericAPIView):
-
     permission_classes = [IsUser]
 
     def post(self, request):
@@ -119,14 +127,4 @@ class GenerateTrendsAPIView(GenericAPIView):
 
             top_trends.extend(get_trends_to_watch(RSS_URL))
 
-
         return get_response_schema(top_trends, SuccessMessage.RECORD_RETRIEVED.value, status.HTTP_200_OK)
-
-
-
-
-
-
-
-
-
