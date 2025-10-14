@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'app.source',
     'app.scrape',
     'app.topic',
+    'app.newsletter',
 ]
 
 MIDDLEWARE = [
