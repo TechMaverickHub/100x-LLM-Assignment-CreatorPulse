@@ -37,7 +37,7 @@ class ApiScrapeAPIView(GenericAPIView):
             articles.extend(scrape_api_source(url, headers))
 
 
-        return get_response_schema({}, SuccessMessage.RECORD_RETRIEVED.value, status.HTTP_200_OK)
+        return get_response_schema(articles, SuccessMessage.RECORD_RETRIEVED.value, status.HTTP_200_OK)
 
 class RedditScrapeAPIView(GenericAPIView):
 
@@ -54,8 +54,7 @@ class RedditScrapeAPIView(GenericAPIView):
         for url in api_urls:
             articles.extend(scrape_reddit_source(url, headers))
 
-        print(articles)
-        return get_response_schema({}, SuccessMessage.RECORD_RETRIEVED.value, status.HTTP_200_OK)
+        return get_response_schema(articles, SuccessMessage.RECORD_RETRIEVED.value, status.HTTP_200_OK)
 
 class ArvixScrapeAPIView(GenericAPIView):
 
@@ -72,8 +71,7 @@ class ArvixScrapeAPIView(GenericAPIView):
         for url in api_urls:
             articles.extend(scrape_arxiv_source(url, headers))
 
-        print(articles)
-        return get_response_schema({}, SuccessMessage.RECORD_RETRIEVED.value, status.HTTP_200_OK)
+        return get_response_schema(articles, SuccessMessage.RECORD_RETRIEVED.value, status.HTTP_200_OK)
 
 class RSSScrapeAPIView(GenericAPIView):
     permission_classes = [IsUser]
@@ -83,10 +81,9 @@ class RSSScrapeAPIView(GenericAPIView):
         articles = []
 
         for url in api_urls:
-            articles.extend(scrape_rss_source("https://magazine.sebastianraschka.com/feed"))
+            articles.extend(scrape_rss_source(url))
 
-        print(articles)
-        return get_response_schema({}, SuccessMessage.RECORD_RETRIEVED.value, status.HTTP_200_OK)
+        return get_response_schema(articles, SuccessMessage.RECORD_RETRIEVED.value, status.HTTP_200_OK)
 
 
 

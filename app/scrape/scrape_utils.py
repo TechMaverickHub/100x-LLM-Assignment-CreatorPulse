@@ -67,7 +67,7 @@ def get_article_content_safe(url):
 
     return ""
 
-def scrape_api_source(url, headers):
+def scrape_api_source(url, headers, max_articles=5):
     """Scrape from API source (like Hacker News)"""
     articles = []
 
@@ -79,6 +79,10 @@ def scrape_api_source(url, headers):
 
         if 'hits' in data:
             for hit in data['hits'][:5]:
+
+                if len(articles) >= max_articles:
+                    break  # Stop once we hit the limit
+
                 title = hit.get('title', '')
                 url = hit.get('url', '')
                 points = hit.get('points', 0)
@@ -104,7 +108,7 @@ def scrape_api_source(url, headers):
     return articles
 
 
-def scrape_reddit_source(url, headers):
+def scrape_reddit_source(url, headers, max_articles=5):
     """Scrape from Reddit source"""
     articles = []
 
@@ -116,6 +120,10 @@ def scrape_reddit_source(url, headers):
 
         if 'data' in data and 'children' in data['data']:
             for post in data['data']['children'][:5]:
+
+                if len(articles) >= max_articles:
+                    break  # Stop once we hit the limit
+
                 post_data = post.get('data', {})
                 title = post_data.get('title', '')
                 url = post_data.get('url', '')
@@ -146,7 +154,7 @@ def scrape_reddit_source(url, headers):
     return articles
 
 
-def scrape_arxiv_source(url, headers):
+def scrape_arxiv_source(url, headers, max_articles=5):
     """Scrape from ArXiv source"""
     articles = []
 
@@ -162,7 +170,7 @@ def scrape_arxiv_source(url, headers):
         # ArXiv namespace
         ns = {'atom': 'http://www.w3.org/2005/Atom'}
 
-        for entry in root.findall('atom:entry', ns)[:5]:
+        for entry in root.findall('atom:entry', ns)[:max_articles]:
             title_elem = entry.find('atom:title', ns)
             summary_elem = entry.find('atom:summary', ns)
             link_elem = entry.find('atom:link[@type="text/html"]', ns)
@@ -185,7 +193,7 @@ def scrape_arxiv_source(url, headers):
 
     return articles
 
-def scrape_rss_source(url):
+def scrape_rss_source(url, max_articles=5):
     """
     Scrape articles from an RSS feed (e.g. 404media.co/rss)
     Returns a list of dicts with: source, title, content, published
@@ -199,7 +207,7 @@ def scrape_rss_source(url):
         feed = feedparser.parse(url)
         print(f"🔍 Found {len(feed.entries)} items in {url}")
 
-        for entry in feed.entries:
+        for entry in feed.entries[:max_articles]:
             link = entry.get("link")
             title = entry.get("title", "").strip()
 
