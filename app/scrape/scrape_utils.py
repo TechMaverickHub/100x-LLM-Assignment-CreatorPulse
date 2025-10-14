@@ -1,5 +1,7 @@
+import feedparser
 import requests
 from bs4 import BeautifulSoup
+from datetime import datetime, timedelta, timezone
 
 
 def get_article_content_safe(url):
@@ -181,4 +183,62 @@ def scrape_arxiv_source(url, headers):
     except Exception as e:
         print(f"   ⚠️ ArXiv scraping error: {e}")
 
+    return articles
+
+def scrape_rss_source(url):
+    """
+    Scrape articles from an RSS feed (e.g. 404media.co/rss)
+    Returns a list of dicts with: source, title, content, published
+    """
+
+    articles = []
+    seen_links = set()
+    now = datetime.now(timezone.utc)
+
+    try:
+        feed = feedparser.parse(url)
+        print(f"🔍 Found {len(feed.entries)} items in {url}")
+
+        for entry in feed.entries:
+            link = entry.get("link")
+            title = entry.get("title", "").strip()
+
+            # Deduplicate
+            if not link or link in seen_links:
+                continue
+            seen_links.add(link)
+
+            # Parse published date (RSS may vary)
+            published_parsed = None
+            if "published_parsed" in entry and entry.published_parsed:
+                published_parsed = datetime(*entry.published_parsed[:6], tzinfo=timezone.utc)
+            elif "updated_parsed" in entry and entry.updated_parsed:
+                published_parsed = datetime(*entry.updated_parsed[:6], tzinfo=timezone.utc)
+            else:
+                published_parsed = now  # fallback if missing
+
+            # Filter: only last 7 days
+            if (now - published_parsed) > timedelta(days=7):
+                continue
+
+            # Fetch full article content (your existing helper)
+            content = get_article_content_safe(link)
+
+            # Skip empty content
+            if not content:
+                continue
+
+            articles.append({
+                "source": link,
+                "title": title,
+                "content": content[:1500],
+                "published": published_parsed.isoformat()
+            })
+
+            print(f"   ✅ Collected: {title[:70]}")
+
+    except Exception as e:
+        print(f"⚠️ RSS scraping error for {url}: {e}")
+
+    print(f"📰 Total collected: {len(articles)}")
     return articles

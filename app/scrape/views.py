@@ -2,7 +2,7 @@ from rest_framework import status
 from rest_framework.generics import GenericAPIView
 
 from app.global_constants import SourceTypeConstants, SuccessMessage
-from app.scrape.scrape_utils import scrape_api_source, scrape_reddit_source, scrape_arxiv_source
+from app.scrape.scrape_utils import scrape_api_source, scrape_reddit_source, scrape_arxiv_source, scrape_rss_source
 from app.source.models import Source
 from app.utils import get_response_schema
 from permissions import IsUser
@@ -75,7 +75,18 @@ class ArvixScrapeAPIView(GenericAPIView):
         print(articles)
         return get_response_schema({}, SuccessMessage.RECORD_RETRIEVED.value, status.HTTP_200_OK)
 
+class RSSScrapeAPIView(GenericAPIView):
+    permission_classes = [IsUser]
+    def post(self, request):
+        api_urls = list(Source.objects.filter(source_type=SourceTypeConstants.RSS.value, is_active=True).values_list("url", flat=True))
 
+        articles = []
+
+        for url in api_urls:
+            articles.extend(scrape_rss_source("https://magazine.sebastianraschka.com/feed"))
+
+        print(articles)
+        return get_response_schema({}, SuccessMessage.RECORD_RETRIEVED.value, status.HTTP_200_OK)
 
 
 
