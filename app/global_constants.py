@@ -44,4 +44,4 @@ class TopicConstants(int, Enum):
     AI = 1
     BLOCKCHAIN = 2
     CYBERSECURITY = 3
-    NETWORKING = 4
+    IOT = 4

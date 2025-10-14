@@ -250,3 +250,41 @@ def scrape_rss_source(url, max_articles=5):
 
     print(f"📰 Total collected: {len(articles)}")
     return articles
+
+
+import feedparser
+from bs4 import BeautifulSoup
+
+
+def get_trends_to_watch(rss_url, top_n=5, summary_length=150):
+    """
+    Fetches top N entries from a Google Alert RSS feed and returns
+    them as a list of dicts with title, short summary, and link.
+
+    Parameters:
+        rss_url (str): The Google Alert RSS feed URL
+        top_n (int): Number of top entries to fetch (default 3)
+        summary_length (int): Maximum length of the summary (default 150 chars)
+
+    Returns:
+        List[dict]: List of trend entries with title, summary, link
+    """
+    feed = feedparser.parse(rss_url)
+    trends = []
+
+    for entry in feed.entries[:top_n]:
+        title = entry.title
+        link = entry.link
+        # Clean summary HTML
+        summary = BeautifulSoup(entry.summary, "html.parser").get_text()
+        # Shorten summary
+        short_summary = summary[:summary_length] + "..." if len(summary) > summary_length else summary
+
+        trends.append({
+            "title": title,
+            "summary": short_summary,
+            "link": link
+        })
+
+    return trends
+
