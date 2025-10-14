@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     'app.scrape',
     'app.topic',
     'app.newsletter',
+    'app.mail',
 ]
 
 MIDDLEWARE = [

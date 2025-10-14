@@ -45,3 +45,7 @@ class TopicConstants(int, Enum):
     BLOCKCHAIN = 2
     CYBERSECURITY = 3
     IOT = 4
+
+class RoleConstants(int, Enum):
+    SUPER_ADMIN = 1
+    USER = 2
