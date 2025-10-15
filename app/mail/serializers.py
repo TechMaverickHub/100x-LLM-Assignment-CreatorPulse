@@ -21,7 +21,7 @@ class UserEmailListFilterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = EmailLog
-        fields = ('recipient', 'message', 'status', 'error_message')
+        fields = ('recipient', 'message', 'status', 'error_message', 'created')
 
 class EmailDisplaySerializer(serializers.ModelSerializer):
     class Meta:
