@@ -1,12 +1,15 @@
 from django.shortcuts import render
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework.generics import ListAPIView
+from rest_framework import status
+from rest_framework.generics import ListAPIView, GenericAPIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from app.core.views import CustomPageNumberPagination
+from app.global_constants import SuccessMessage
 from app.mail.models import EmailLog
 from app.mail.serializers import EmailLogListFilterSerializer, UserEmailListFilterSerializer
+from app.utils import get_response_schema
 from permissions import IsSuperAdmin, IsUser
 
 
@@ -123,4 +126,17 @@ class UserEmailListFilterAPIView(ListAPIView):
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
+
+
+class CountNewsletterReceivedAPIView(GenericAPIView):
+    """Count all newsletter received"""
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsUser]
+
+    def get(self, request):
+
+        email_count = EmailLog.objects.filter(user_id=request.user.id, is_active=True, status="SUCCESS").count()
+
+        return get_response_schema({"count": email_count}, SuccessMessage.RECORD_RETRIEVED.value, status.HTTP_200_OK)
 
