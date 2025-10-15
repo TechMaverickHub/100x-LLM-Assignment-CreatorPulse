@@ -8,7 +8,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from app.core.views import CustomPageNumberPagination
 from app.global_constants import SuccessMessage
 from app.mail.models import EmailLog
-from app.mail.serializers import EmailLogListFilterSerializer, UserEmailListFilterSerializer
+from app.mail.serializers import EmailLogListFilterSerializer, UserEmailListFilterSerializer, EmailDisplaySerializer
 from app.utils import get_response_schema
 from permissions import IsSuperAdmin, IsUser
 
@@ -140,3 +140,17 @@ class CountNewsletterReceivedAPIView(GenericAPIView):
 
         return get_response_schema({"count": email_count}, SuccessMessage.RECORD_RETRIEVED.value, status.HTTP_200_OK)
 
+
+class LatestNewsletterAPIView(GenericAPIView):
+    """Get latest newsletter"""
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsUser]
+
+    def get(self, request):
+
+        latest_email = EmailLog.objects.filter(user_id=request.user.id, is_active=True, status="SUCCESS").order_by("-id").first()
+
+        serializer = EmailDisplaySerializer(latest_email)
+
+        return get_response_schema(serializer.data, SuccessMessage.RECORD_RETRIEVED.value, status.HTTP_200_OK)
