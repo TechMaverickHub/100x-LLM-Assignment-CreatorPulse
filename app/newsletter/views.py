@@ -1,11 +1,18 @@
+import logging
 import os
+import time
+from datetime import datetime
 
 import resend
+from django.db import transaction
 from dotenv import load_dotenv
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.generics import GenericAPIView
 
-from app.global_constants import SourceTypeConstants, SuccessMessage, TopicConstants
+from app.global_constants import SourceTypeConstants, SuccessMessage, TopicConstants, ErrorMessage
+from app.mail.models import EmailLog
 from app.newsletter.ai_curator import curate_newsletter
 from app.newsletter.email_sender import newsletter_to_html
 from app.scrape.scrape_utils import scrape_api_source, scrape_reddit_source, scrape_arxiv_source, scrape_rss_source, \
@@ -15,9 +22,9 @@ from app.topic.models import UserTopic
 from app.utils import get_response_schema
 from permissions import IsUser
 
+logger = logging.getLogger('scheduler')
+
 load_dotenv()
-
-
 # Create your views here.
 class GenerateNewsletterAPIView(GenericAPIView):
     permission_classes = [IsUser]
@@ -83,13 +90,13 @@ class GenerateNewsletterAPIView(GenericAPIView):
 
         html_content = newsletter_to_html(newsletter_content)
 
-        resend.api_key = os.getenv("RESEND_API_KEY")
-        r = resend.Emails.send({
-            "from": "onboarding@resend.dev",
-            "to": "abhiroop1998.dev@gmail.com",
-            "subject": "AI Newsletter",
-            "html": html_content
-        })
+        # resend.api_key = os.getenv("RESEND_API_KEY")
+        # r = resend.Emails.send({
+        #     "from": "onboarding@resend.dev",
+        #     "to": "abhiroop1998.dev@gmail.com",
+        #     "subject": "AI Newsletter",
+        #     "html": html_content
+        # })
 
         return get_response_schema(html_content, SuccessMessage.RECORD_RETRIEVED.value, status.HTTP_200_OK)
 
@@ -128,3 +135,67 @@ class GenerateTrendsAPIView(GenericAPIView):
             top_trends.extend(get_trends_to_watch(RSS_URL))
 
         return get_response_schema(top_trends, SuccessMessage.RECORD_RETRIEVED.value, status.HTTP_200_OK)
+
+class SendNewsletterAPIView(GenericAPIView):
+    permission_classes = [IsUser]
+
+    @swagger_auto_schema(
+        request_body=
+        openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                "html_content": openapi.Schema(type=openapi.TYPE_STRING, description="Email to send newsletter to"),
+                "recipient": openapi.Schema(type=openapi.TYPE_STRING, description="Email to send newsletter to"),
+            },
+        )
+    )
+    def post(self, request):
+
+        html_content = request.data.get("html_content")
+        recipient = request.data.get("recipient")
+
+        if recipient is None:
+            recipient = request.user.email
+
+        retries = 3
+        for attempt in range(1, retries + 1):
+            try:
+                resend.api_key = os.getenv("RESEND_API_KEY")
+                r = resend.Emails.send({
+                    "from": "onboarding@resend.dev",
+                    "to": recipient,
+                    "subject": "Daily Newsletter",
+                    "html": html_content
+                })
+
+                # Create DB log
+                with transaction.atomic():
+                    EmailLog.objects.create(
+                        user_id=request.user.id,
+                        recipient=recipient,
+                        message=html_content,
+                        status='SUCCESS'
+                    )
+
+                logger.info(f"[{datetime.now()}] Email sent successfully to {recipient}")
+                return get_response_schema(None, SuccessMessage.RECORD_RETRIEVED.value, status.HTTP_200_OK)
+
+            except Exception as e:
+                logger.error(f"Attempt {attempt} failed: {str(e)}")
+                time.sleep(2 ** attempt)  # Exponential backoff
+
+        # If all retries failed
+        EmailLog.objects.create(
+            user_id=request.user.id,
+            message=html_content,
+            recipient="abhiroop1998.dev@gmail.com",
+            status='FAILED',
+            error_message=str(e)
+        )
+        logger.error(f"[{datetime.now()}] Email sending failed after retries.")
+        return get_response_schema({}, ErrorMessage.BAD_REQUEST.value, status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
