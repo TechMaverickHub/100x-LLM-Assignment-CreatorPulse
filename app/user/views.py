@@ -92,7 +92,7 @@ class UserSetupView(GenericAPIView):
 
 class UserLoginThrottle(AnonRateThrottle):
     """Custom throttle for login endpoint"""
-    rate = '5/hour'
+    rate = '100/hour'
 
 
 class UserLogin(GenericAPIView):

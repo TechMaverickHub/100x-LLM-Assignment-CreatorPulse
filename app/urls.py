@@ -46,6 +46,7 @@ urlpatterns = [
     path('api/topic/', include('app.topic.urls')),
     path('api/scrape/', include('app.scrape.urls')),
     path('api/newsletter/', include('app.newsletter.urls')),
+    path('api/mail/', include('app.mail.urls')),
 ]
 
 if settings.DEBUG:

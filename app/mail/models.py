@@ -1,8 +1,19 @@
 from django.db import models
 
+from app.user.models import User
+
+
 # Create your models here.
 
 class EmailLog(models.Model):
+
+    #Foreign key declaration
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='email_logs',
+        related_query_name='email_log'
+    )
 
     #Field declarations
     recipient = models.EmailField()
