@@ -26,7 +26,6 @@ load_dotenv()
 def send_daily_email():
     """Function that sends email and logs results."""
 
-    print("sending email")
     subject = "Daily Newsletter"
     retries = 3
 
@@ -34,7 +33,6 @@ def send_daily_email():
 
     user_list = UserDisplaySerializer(user_queryset, many=True).data
 
-    print(user_list)
     for user in user_list:
         user_topic_queryset = UserTopic.objects.select_related("topic") \
             .filter(user_id=user.get("pk"))
@@ -109,6 +107,7 @@ def send_daily_email():
                 # Create DB log
                 with transaction.atomic():
                     EmailLog.objects.create(
+                        user_id=user.get("pk"),
                         recipient="abhiroop1998.dev@gmail.com",
                         message=html_content,
                         status='SUCCESS'
@@ -123,6 +122,7 @@ def send_daily_email():
 
         # If all retries failed
         EmailLog.objects.create(
+            user_id=user.get("pk"),
             message=html_content,
             recipient="abhiroop1998.dev@gmail.com",
             status='FAILED',
@@ -132,6 +132,6 @@ def send_daily_email():
 
 def start_scheduler():
     scheduler = BackgroundScheduler()
-    scheduler.add_job(send_daily_email, CronTrigger(hour=20, minute=26))
+    scheduler.add_job(send_daily_email, CronTrigger(hour=20, minute=37))
     scheduler.start()
     logger.info("Daily email scheduler started (runs at 8:00 AM every day)")

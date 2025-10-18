@@ -10,6 +10,7 @@ from app.global_constants import ErrorMessage, SuccessMessage
 from app.source.models import Source
 from app.source.serializers import SourceCreateSerializer, SourceDisplaySerializer, SourceUpdateSerializer, \
     SourceListFilterDisplaySerializer
+from app.topic.models import UserTopic
 from app.utils import get_response_schema
 from permissions import IsUser, IsSuperAdmin
 
@@ -150,5 +151,54 @@ class SourceListFilter(ListAPIView):
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
 
+
+# For User
+class UserSourceListAPIView(ListAPIView):
+    """Source: List-filter"""
+
+    serializer_class = SourceListFilterDisplaySerializer
+    pagination_class = CustomPageNumberPagination
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsUser]
+
+    def get_queryset(self):
+
+        user_topic = list(UserTopic.objects.select_related("topic").filter(user_id=self.request.user.id, topic__is_active=True).values_list("topic_id", flat=True))
+
+        source_queryset = Source.objects.select_related("source_type","topic").filter(is_active=True,topic_id__in=user_topic).order_by("-updated")
+
+        # Filter by name
+        name = self.request.query_params.get("name", None)
+        if name:
+            source_queryset = source_queryset.filter(name__istartswith=name)
+
+        # Filter by url
+        url = self.request.query_params.get("url", None)
+        if url:
+            source_queryset = source_queryset.filter(url__icontains=url)
+
+        # Filter by source type
+        source_type = self.request.query_params.get("source_type", None)
+        if source_type:
+            source_queryset = source_queryset.filter(source_type_id=source_type)
+
+        # Filter by topic
+        topic = self.request.query_params.get("topic", None)
+        if topic:
+            source_queryset = source_queryset.filter(topic_id=topic)
+
+        return source_queryset
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter("name", openapi.IN_QUERY, description="Filter by name", type=openapi.TYPE_STRING),
+            openapi.Parameter("url", openapi.IN_QUERY, description="Filter by url", type=openapi.TYPE_STRING),
+            openapi.Parameter("source_type", openapi.IN_QUERY, description="Filter by source type", type=openapi.TYPE_INTEGER),
+            openapi.Parameter("topic", openapi.IN_QUERY, description="Filter by topic", type=openapi.TYPE_INTEGER),
+        ]
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
 
 
