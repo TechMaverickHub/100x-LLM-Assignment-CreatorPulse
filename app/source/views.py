@@ -159,6 +159,27 @@ class SourceListFilter(ListAPIView):
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
 
+class SourceActivateAPIView(GenericAPIView):
+    """Source: Activate"""
+
+    permission_classes = [IsSuperAdmin]
+
+    def get_object(self, pk):
+
+        source_object = Source.objects.filter(pk=pk, is_active=False)
+        if source_object:
+            return source_object[0]
+        return None
+
+    def patch(self, request, pk):
+
+        source = self.get_object(pk)
+        if not source:
+            return get_response_schema({}, ErrorMessage.NOT_FOUND.value, status.HTTP_404_NOT_FOUND)
+
+        source.is_active = True
+        source.save()
+        return get_response_schema({}, SuccessMessage.RECORD_UPDATED.value, status.HTTP_200_OK)
 
 # For User
 class UserSourceListAPIView(ListAPIView):
