@@ -21,12 +21,16 @@ class CountAdminAPIView(GenericAPIView):
         active_source = Source.objects.filter(is_active=True).count()
         total_users = User.objects.filter(role_id=RoleConstants.USER.value).count()
         total_newsletter_sent = EmailLog.objects.filter(status='SUCCESS').count()
+        last_newsletter_sent = EmailLog.objects.filter(status='SUCCESS').order_by('-created').first().created,
+        new_user_registered = User.objects.filter(role_id=RoleConstants.USER.value).order_by('-created').first().created,
 
         return_data = {
             "total_source": total_source,
             "active_source": active_source,
             "total_users": total_users,
-            "total_newsletter_sent": total_newsletter_sent
+            "total_newsletter_sent": total_newsletter_sent,
+            "last_newsletter_sent": last_newsletter_sent,
+            "new_user_registered": new_user_registered
         }
 
         return get_response_schema(return_data, SuccessMessage.RECORD_RETRIEVED.value, status.HTTP_200_OK)
