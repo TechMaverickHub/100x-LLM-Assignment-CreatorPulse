@@ -202,7 +202,7 @@ class UserDetailAPI(GenericAPIView):
 
     def get_object(self, pk):
 
-        user_queryset = get_user_model().objects.select_related('role').filter(pk=pk,is_active=True, role_id=GlobalValues.ADMIN.value)
+        user_queryset = get_user_model().objects.select_related('role').filter(pk=pk,is_active=True, role_id=GlobalValues.USER.value)
         if user_queryset:
             return user_queryset[0]
         return None
@@ -310,6 +310,63 @@ class UserDetailAPI(GenericAPIView):
             ErrorMessage.BAD_REQUEST.value,
             status.HTTP_400_BAD_REQUEST
         )
+
+
+class UserListFilterAPI(ListAPIView):
+    """User List filter for Superadmin"""
+
+    serializer_class = UserListFilterDisplaySerializer
+    pagination_class = CustomPageNumberPagination
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsSuperAdmin]
+
+    def get_queryset(self):
+
+        user_queryset = get_user_model().objects.filter(is_active=True, role_id=GlobalValues.USER.value).order_by('-updated')
+
+        # Filter by user email
+        email = self.request.query_params.get("email", None)
+        if email:
+            user_queryset = user_queryset.filter(email__istartswith=email)
+
+        # Filter by first name
+        first_name = self.request.query_params.get("first_name", None)
+        if first_name:
+            user_queryset = user_queryset.filter(first_name__istartswith=first_name)
+
+        # Filter by last name
+        last_name = self.request.query_params.get("last_name", None)
+        if last_name:
+            user_queryset = user_queryset.filter(last_name__istartswith=last_name)
+
+        return user_queryset
+
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                name="email",
+                in_=openapi.IN_QUERY,
+                description="Filter by user email",
+                type=openapi.TYPE_STRING
+            ),
+            openapi.Parameter(
+                name="first_name",
+                in_=openapi.IN_QUERY,
+                description="Filter by user first name",
+                type=openapi.TYPE_STRING
+            ),
+            openapi.Parameter(
+                name="last_name",
+                in_=openapi.IN_QUERY,
+                description="Filter by user last name",
+                type=openapi.TYPE_STRING
+            ),
+        ]
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
 
 
 

@@ -1,7 +1,7 @@
 from django.urls import path
 
 from app.user.views import SuperAdminSetupView, UserLogin, UserLogout, UserDetailAPI, \
-    UserSetupView
+    UserSetupView, UserListFilterAPI
 
 urlpatterns = [
     # Authentication
@@ -13,6 +13,7 @@ urlpatterns = [
     path('user-sign-up/', UserSetupView.as_view(), name='user-setup'),
 
     # Superadmin views
-    path('<str:pk>', UserDetailAPI.as_view(), name='user-detail')
+    path('<int:pk>', UserDetailAPI.as_view(), name='user-detail'),
+    path('list-filter', UserListFilterAPI.as_view(), name='user-list-filter')
 
 ]
