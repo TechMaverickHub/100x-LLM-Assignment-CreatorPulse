@@ -55,7 +55,7 @@ class SourceDetailAPIView(GenericAPIView):
 
     def get_object(self, pk):
 
-        source_object = Source.objects.filter(pk=pk, is_active=True, user_id=self.request.user.id)
+        source_object = Source.objects.filter(pk=pk)
         if source_object:
             return source_object[0]
         return None
@@ -116,7 +116,7 @@ class SourceListFilter(ListAPIView):
 
     def get_queryset(self):
 
-        source_queryset = Source.objects.select_related("source_type","topic").filter(is_active=True).order_by("-updated")
+        source_queryset = Source.objects.select_related("source_type","topic").order_by("-updated")
 
         # Filter by name
         name = self.request.query_params.get("name", None)
@@ -138,6 +138,12 @@ class SourceListFilter(ListAPIView):
         if topic:
             source_queryset = source_queryset.filter(topic_id=topic)
 
+        # Filter by is_active
+        is_active = self.request.query_params.get("is_active", None)
+        if is_active:
+            source_queryset = source_queryset.filter(is_active=is_active)
+
+
         return source_queryset
 
     @swagger_auto_schema(
@@ -146,6 +152,8 @@ class SourceListFilter(ListAPIView):
             openapi.Parameter("url", openapi.IN_QUERY, description="Filter by url", type=openapi.TYPE_STRING),
             openapi.Parameter("source_type", openapi.IN_QUERY, description="Filter by source type", type=openapi.TYPE_INTEGER),
             openapi.Parameter("topic", openapi.IN_QUERY, description="Filter by topic", type=openapi.TYPE_INTEGER),
+            openapi.Parameter("is_active", openapi.IN_QUERY, description="Filter by is_active", type=openapi.TYPE_STRING, enum=["True", "False"]),
+
         ]
     )
     def get(self, request, *args, **kwargs):

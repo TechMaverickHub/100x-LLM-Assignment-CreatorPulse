@@ -16,7 +16,7 @@ class SourceTypeDisplaySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SourceType
-        fields = ["name"]
+        fields = ["pk", "name"]
 
 class SourceDisplaySerializer(serializers.ModelSerializer):
     """Serializer for displaying a source"""
@@ -41,4 +41,4 @@ class SourceListFilterDisplaySerializer(serializers.ModelSerializer):
     topic = TopicDisplaySerializer()
     class Meta:
         model = Source
-        fields = ["pk", "name", "url", "source_type", "description", "topic"]
+        fields = ["pk", "name", "url", "source_type", "description", "topic", "is_active"]

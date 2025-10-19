@@ -9,14 +9,14 @@ from app.global_constants import SuccessMessage
 from app.topic.models import Topic, UserTopic
 from app.topic.serializers import TopicDisplaySerializer, UserTopicDisplaySerializer
 from app.utils import get_response_schema
-from permissions import IsUser
+from permissions import IsUser, IsSuperAdminOrUser
 
 
 # Create your views here.
 class TopicListAPIView(GenericAPIView):
     """View: Display all topics"""
 
-    permission_classes = [IsUser]
+    permission_classes = [IsSuperAdminOrUser]
     serializer_class = TopicDisplaySerializer
     def get(self, request):
 
