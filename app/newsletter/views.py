@@ -86,19 +86,9 @@ class GenerateNewsletterAPIView(GenericAPIView):
 
             top_trends.extend(get_trends_to_watch(RSS_URL))
 
-        newsletter_content = curate_newsletter(articles, topics, top_trends)
+        newsletter_content = curate_newsletter(articles, topics, top_trends, user_id=request.user.id)
 
         html_content = newsletter_to_html(newsletter_content)
-
-        print(html_content)
-
-        # resend.api_key = os.getenv("RESEND_API_KEY")
-        # r = resend.Emails.send({
-        #     "from": "onboarding@resend.dev",
-        #     "to": "abhiroop1998.dev@gmail.com",
-        #     "subject": "AI Newsletter",
-        #     "html": html_content
-        # })
 
         return get_response_schema(html_content, SuccessMessage.RECORD_RETRIEVED.value, status.HTTP_200_OK)
 

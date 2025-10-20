@@ -89,7 +89,7 @@ def send_daily_email():
 
             top_trends.extend(get_trends_to_watch(RSS_URL))
 
-        newsletter_content = curate_newsletter(articles, topics, top_trends)
+        newsletter_content = curate_newsletter(articles, topics, top_trends, user_id=user.get("pk"))
 
         html_content = newsletter_to_html(newsletter_content)
 

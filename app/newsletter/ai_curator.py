@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 from groq import Groq
 import os
 
+from app.sample.sample_utils import style_examples_loader
+
 load_dotenv()
 
 
@@ -103,10 +105,19 @@ def curate_newsletter(
     user_topics: List[str],
     top_trends: List[dict],
     max_articles: int = 3,
-    max_trends: int = 3
+    max_trends: int = 3,
+    user_id: int = None
 ) -> dict:
     """Curate a newsletter as structured JSON using Groq LLM, token-safe version"""
     client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+
+    # Load writing style examples
+    style_examples = style_examples_loader(user_id)
+    style_prompt = "\n\n".join([
+        f"=== EXAMPLE STYLE {i + 1} ===\n{ex}\n"
+        for i, ex in enumerate(style_examples)
+    ])
+    style_prompt += "\n===\nWrite the following newsletter in a similar voice and tone.\n"
 
     # Sort or filter articles by relevance to user_topics (simple keyword match)
     def relevance_score(article):
@@ -128,6 +139,7 @@ def curate_newsletter(
     ])
 
     prompt = f"""
+{style_prompt}
 You are an AI newsletter curator. Based on the following user topics: {', '.join(user_topics)}, create a newsletter as **valid JSON** with these sections:
 
 1. "intro": a contextual overview paragraph of the week's developments.
@@ -170,6 +182,7 @@ All Trends:
 {trends_context}
 """
 
+    print(prompt)
     response = client.chat.completions.create(
         model="openai/gpt-oss-20b",
         messages=[{"role": "user", "content": prompt}],
