@@ -68,7 +68,8 @@ class UserListFilterDisplaySerializer(serializers.ModelSerializer):
             'first_name',
             'last_name',
             'delivery_time',
-            'created'
+            'created',
+            'is_active'
 
         )
 

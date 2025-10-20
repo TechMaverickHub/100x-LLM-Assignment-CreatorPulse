@@ -323,7 +323,7 @@ class UserListFilterAPI(ListAPIView):
 
     def get_queryset(self):
 
-        user_queryset = get_user_model().objects.filter(is_active=True, role_id=GlobalValues.USER.value).order_by('-updated')
+        user_queryset = get_user_model().objects.filter(role_id=GlobalValues.USER.value).order_by('-updated')
 
         # Filter by user email
         email = self.request.query_params.get("email", None)
@@ -339,6 +339,11 @@ class UserListFilterAPI(ListAPIView):
         last_name = self.request.query_params.get("last_name", None)
         if last_name:
             user_queryset = user_queryset.filter(last_name__istartswith=last_name)
+
+        # Filter by is_active
+        is_active = self.request.query_params.get("is_active", None)
+        if is_active:
+            user_queryset = user_queryset.filter(is_active=is_active)
 
         return user_queryset
 
@@ -363,13 +368,55 @@ class UserListFilterAPI(ListAPIView):
                 description="Filter by user last name",
                 type=openapi.TYPE_STRING
             ),
+            openapi.Parameter(
+                name="is_active",
+                in_=openapi.IN_QUERY,
+                description="Filter by user is_active",
+                type=openapi.TYPE_STRING,
+                enum=["True", "False"]
+            ),
         ]
     )
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
 
 
+class ActivateUserAPI(GenericAPIView):
+    """Activate user for Superadmin"""
 
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsSuperAdmin]
+
+    def get_object(self, pk):
+
+        user_queryset = get_user_model().objects.filter(pk=pk,is_active=False, role_id=GlobalValues.USER.value)
+        if user_queryset:
+            return user_queryset[0]
+        return None
+
+    def post(self, request, pk):
+
+        logger.info(f"ActivateUserAPI accessed by user: {request.user}. Requested user ID: {pk}")
+
+        if not pk:
+            logger.warning("Bad request: No primary key provided.")
+            return get_response_schema({}, ErrorMessage.BAD_REQUEST.value, status.HTTP_400_BAD_REQUEST)
+
+        user = self.get_object(pk)
+        if not user:
+            logger.error(f"Error retrieving user with ID {pk}", exc_info=True)
+            return get_response_schema(
+                {},
+                ErrorMessage.NOT_FOUND.value,
+                status.HTTP_404_NOT_FOUND
+            )
+
+        user.is_active = True
+        user.save()
+
+        logger.info(f"Successfully activated user with ID {pk}")
+
+        return get_response_schema({}, SuccessMessage.RECORD_UPDATED.value, status.HTTP_200_OK)
 
 
 
