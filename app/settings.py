@@ -63,8 +63,8 @@ INSTALLED_APPS = [
     'app.topic',
     'app.newsletter',
     'app.mail',
-    'app.management',
     'app.analytics',
+    'app.sample',
 ]
 
 MIDDLEWARE = [

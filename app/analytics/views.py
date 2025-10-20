@@ -3,7 +3,7 @@ from django.db.models import Count, Q
 from rest_framework import status
 from rest_framework.generics import GenericAPIView
 
-from app.global_constants import GlobalValues, SuccessMessage
+from app.global_constants import GlobalValues, SuccessMessage, RoleConstants
 from app.mail.models import EmailLog
 from app.source.models import Source
 from app.topic.models import UserTopic
@@ -152,6 +152,32 @@ class TopicsTopAPIView(GenericAPIView):
         return_data = {
             "topic": [item['topic__name'] for item in user_counts],
             "count": [item['user_count'] for item in user_counts]
+        }
+
+        return get_response_schema(return_data, SuccessMessage.RECORD_RETRIEVED.value, status.HTTP_200_OK)
+
+
+class CountAdminAPIView(GenericAPIView):
+    """View: Show Total source, active sources, Total Users, TOtal Newsletters sent"""
+
+    permission_classes = [IsSuperAdmin]
+
+    def get(self, request):
+
+        total_source = Source.objects.count()
+        active_source = Source.objects.filter(is_active=True).count()
+        total_users = get_user_model().objects.filter(role_id=RoleConstants.USER.value).count()
+        total_newsletter_sent = EmailLog.objects.filter(status='SUCCESS').count()
+        last_newsletter_sent = EmailLog.objects.filter(status='SUCCESS').order_by('-created').first().created,
+        new_user_registered = get_user_model().objects.filter(role_id=RoleConstants.USER.value).order_by('-created').first().created,
+
+        return_data = {
+            "total_source": total_source,
+            "active_source": active_source,
+            "total_users": total_users,
+            "total_newsletter_sent": total_newsletter_sent,
+            "last_newsletter_sent": last_newsletter_sent,
+            "new_user_registered": new_user_registered
         }
 
         return get_response_schema(return_data, SuccessMessage.RECORD_RETRIEVED.value, status.HTTP_200_OK)
