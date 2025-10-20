@@ -37,6 +37,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
     delivery_time = models.TimeField(default=time(8,0))
+    last_login = models.DateTimeField(auto_now=True)
 
 
     # Timestamps

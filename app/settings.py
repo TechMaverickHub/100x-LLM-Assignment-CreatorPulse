@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     'app.newsletter',
     'app.mail',
     'app.management',
+    'app.analytics',
 ]
 
 MIDDLEWARE = [
