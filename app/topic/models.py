@@ -32,5 +32,13 @@ class UserTopic(models.Model):
         related_query_name="user"  # filter topics by a specific user: Topic.objects.filter(user=some_user)
     )
 
+    # Additional field declarations
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+
     class Meta:
         unique_together = ('user', 'topic')  # optional: prevent duplicate user-topic mappings
+
+
+
