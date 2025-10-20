@@ -90,6 +90,8 @@ class GenerateNewsletterAPIView(GenericAPIView):
 
         html_content = newsletter_to_html(newsletter_content)
 
+        print(html_content)
+
         # resend.api_key = os.getenv("RESEND_API_KEY")
         # r = resend.Emails.send({
         #     "from": "onboarding@resend.dev",
