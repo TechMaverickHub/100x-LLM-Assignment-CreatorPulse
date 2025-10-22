@@ -9,12 +9,17 @@ from dotenv import load_dotenv
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
-from rest_framework.generics import GenericAPIView
+from rest_framework.generics import GenericAPIView, ListAPIView
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
+from app.core.views import CustomPageNumberPagination
 from app.global_constants import SourceTypeConstants, SuccessMessage, TopicConstants, ErrorMessage
 from app.mail.models import EmailLog
 from app.newsletter.ai_curator import curate_newsletter
 from app.newsletter.email_sender import newsletter_to_html
+from app.newsletter.models import NewsletterTemplate, NewsletterDraft
+from app.newsletter.serializers import NewsletterTemplateCreateSerializer, NewsletterDraftCreateSerializer, \
+    NewsletterDraftDisplaySerializer, NewsletterDraftListDisplaySerializer, NewsletterTemplateDisplaySerializer
 from app.scrape.scrape_utils import scrape_api_source, scrape_reddit_source, scrape_arxiv_source, scrape_rss_source, \
     get_trends_to_watch
 from app.source.models import Source
@@ -25,6 +30,8 @@ from permissions import IsUser
 logger = logging.getLogger('scheduler')
 
 load_dotenv()
+
+
 # Create your views here.
 class GenerateNewsletterAPIView(GenericAPIView):
     permission_classes = [IsUser]
@@ -128,6 +135,7 @@ class GenerateTrendsAPIView(GenericAPIView):
 
         return get_response_schema(top_trends, SuccessMessage.RECORD_RETRIEVED.value, status.HTTP_200_OK)
 
+
 class SendNewsletterAPIView(GenericAPIView):
     permission_classes = [IsUser]
 
@@ -188,6 +196,167 @@ class SendNewsletterAPIView(GenericAPIView):
         return get_response_schema({}, ErrorMessage.BAD_REQUEST.value, status.HTTP_400_BAD_REQUEST)
 
 
+class NewsletterTemplateCreateAPIView(GenericAPIView):
+    permission_classes = [IsUser]
+
+    @swagger_auto_schema(
+        request_body=
+        openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                "name": openapi.Schema(type=openapi.TYPE_STRING, description="Name of the template"),
+                "html_content": openapi.Schema(type=openapi.TYPE_STRING, description="HTML content of the template"),
+            }
+        )
+    )
+    def post(self, request):
+
+        name = request.data.get("name")
+        html_content = request.data.get("html_content")
+
+        if name is None or html_content is None:
+            return get_response_schema({}, ErrorMessage.BAD_REQUEST.value, status.HTTP_400_BAD_REQUEST)
+
+        with transaction.atomic():
+            news_letter_template_data = {
+                "name": name,
+                "user": request.user.id
+            }
+            news_letter_template_serializer = NewsletterTemplateCreateSerializer(data=news_letter_template_data)
+
+            if news_letter_template_serializer.is_valid():
+                news_letter_template_serializer.save()
+            else:
+                transaction.set_rollback(True)
+                return get_response_schema(news_letter_template_serializer.errors, ErrorMessage.BAD_REQUEST.value,
+                                           status.HTTP_400_BAD_REQUEST)
+
+            news_letter_draft_data = {
+                "newsletter_template": news_letter_template_serializer.data["pk"],
+                "html_content": html_content,
+            }
+
+            news_letter_draft_serializer = NewsletterDraftCreateSerializer(data=news_letter_draft_data)
+
+            if news_letter_draft_serializer.is_valid():
+                news_letter_draft_serializer.save()
+                return get_response_schema(news_letter_draft_serializer.data, SuccessMessage.RECORD_CREATED.value,
+                                           status.HTTP_201_CREATED)
+            else:
+                transaction.set_rollback(True)
+                return get_response_schema(news_letter_draft_serializer.errors, ErrorMessage.BAD_REQUEST.value,
+                                           status.HTTP_400_BAD_REQUEST)
+
+
+class NewsletterDraftCreateAPIView(GenericAPIView):
+    permission_classes = [IsUser]
+
+    @swagger_auto_schema(
+        request_body=
+        openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                "newsletter_template_id": openapi.Schema(type=openapi.TYPE_INTEGER, description="ID of the template"),
+                "html_content": openapi.Schema(type=openapi.TYPE_STRING, description="HTML content of the draft"),
+            }
+        )
+    )
+    def post(self, request):
+
+        newsletter_template_id = request.data.get("newsletter_template_id")
+        html_content = request.data.get("html_content")
+
+        if newsletter_template_id is None or html_content is None:
+            return get_response_schema({}, ErrorMessage.BAD_REQUEST.value, status.HTTP_400_BAD_REQUEST)
+
+        # check if newsletter_template exists and belongs to user
+        newsletter_template = NewsletterTemplate.objects.filter(id=newsletter_template_id, user_id=request.user.id,
+                                                                is_active=True).first()
+        if not newsletter_template:
+            return get_response_schema({}, ErrorMessage.NOT_FOUND.value, status.HTTP_404_NOT_FOUND)
+
+        with transaction.atomic():
+
+            newsletter_draft_data = {
+                "newsletter_template": newsletter_template_id,
+                "html_content": html_content,
+            }
+
+            newsletter_draft_serializer = NewsletterDraftCreateSerializer(data=newsletter_draft_data)
+
+            if newsletter_draft_serializer.is_valid():
+                newsletter_draft_serializer.save()
+                return get_response_schema(newsletter_draft_serializer.data, SuccessMessage.RECORD_CREATED.value,
+                                           status.HTTP_201_CREATED)
+            else:
+                transaction.set_rollback(True)
+                return get_response_schema(newsletter_draft_serializer.errors, ErrorMessage.BAD_REQUEST.value,
+                                           status.HTTP_400_BAD_REQUEST)
+
+
+class NewsletterDraftDetailAPIView(GenericAPIView):
+    permission_classes = [IsUser]
+
+    def get_object(self, request, pk):
+        news_letter_draft_queryset = NewsletterDraft.objects.select_related("newsletter_template").filter(pk=pk,
+                                                                                                         newsletter_template__user_id=request.user.id,
+                                                                                                         newsletter_template__is_active=True).first()
+        if not news_letter_draft_queryset:
+            return None
+        return news_letter_draft_queryset
+
+    def get(self, request, pk):
+        newsletter_draft = self.get_object(request, pk)
+        if not newsletter_draft:
+            return get_response_schema({}, ErrorMessage.NOT_FOUND.value, status.HTTP_404_NOT_FOUND)
+        serializer = NewsletterDraftDisplaySerializer(newsletter_draft)
+        return get_response_schema(serializer.data, SuccessMessage.RECORD_RETRIEVED.value, status.HTTP_200_OK)
+
+
+class NewsletterDraftListAPIView(GenericAPIView):
+
+    permission_classes = [IsUser]
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter("newsletter_template_id", openapi.IN_QUERY, description="ID of the template", type=openapi.TYPE_INTEGER, required=True),
+        ]
+    )
+    def get(self, request):
+        newsletter_drafts = NewsletterDraft.objects.select_related("newsletter_template").filter(newsletter_template_id=request.query_params.get("newsletter_template_id"),
+                                                                                             newsletter_template__user_id=request.user.id,
+                                                                                             newsletter_template__is_active=True)
+        serializer = NewsletterDraftListDisplaySerializer(newsletter_drafts, many=True)
+        return get_response_schema(serializer.data, SuccessMessage.RECORD_RETRIEVED.value, status.HTTP_200_OK)
+
+
+class NewsLetterTemplateListFilterAPIview(ListAPIView):
+    """View: Newsletter templates ListFilter"""
+
+    serializer_class = NewsletterTemplateDisplaySerializer
+    pagination_class = CustomPageNumberPagination
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsUser]
+
+    def get_queryset(self):
+
+        news_letter_template_queryset = NewsletterTemplate.objects.select_related("user").filter(user_id=self.request.user.id, is_active=True).order_by("-created")
+
+        # Filter by name
+        name = self.request.query_params.get("name", None)
+        if name:
+            news_letter_template_queryset = news_letter_template_queryset.filter(name__istartswith=name)
+
+        return news_letter_template_queryset
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter("name", openapi.IN_QUERY, description="Name of the template", type=openapi.TYPE_STRING, required=False),
+        ]
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
 
 
 

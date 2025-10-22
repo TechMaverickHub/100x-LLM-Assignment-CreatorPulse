@@ -1,6 +1,8 @@
 from django.urls import path
 
-from app.newsletter.views import GenerateNewsletterAPIView, GenerateTrendsAPIView, SendNewsletterAPIView
+from app.newsletter.views import GenerateNewsletterAPIView, GenerateTrendsAPIView, SendNewsletterAPIView, \
+    NewsletterTemplateCreateAPIView, NewsletterDraftCreateAPIView, NewsletterDraftDetailAPIView, \
+    NewsletterDraftListAPIView, NewsLetterTemplateListFilterAPIview
 
 urlpatterns = [
     # Authentication
@@ -10,4 +12,14 @@ urlpatterns = [
 
     path("send-newsletter", SendNewsletterAPIView.as_view(), name="send-newsletter"),
 
+    #Newsletter Template
+    path("template", NewsletterTemplateCreateAPIView.as_view(), name="newsletter-template-create"),
+
+    path("template/list-filter", NewsLetterTemplateListFilterAPIview.as_view(), name="newsletter-template-list-filter"),
+
+    path("draft", NewsletterDraftCreateAPIView.as_view(), name="newsletter-draft-create"),
+
+    path("draft/<int:pk>", NewsletterDraftDetailAPIView.as_view(), name="newsletter-draft-detail"),
+
+    path("draft/list", NewsletterDraftListAPIView.as_view(), name="newsletter-draft-list")
 ]
