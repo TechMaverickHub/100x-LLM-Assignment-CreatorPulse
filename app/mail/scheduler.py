@@ -18,7 +18,6 @@ def send_scheduled_newsletters():
     now = timezone.now()
     logger.info(f"Running scheduled newsletter job at {now}")
 
-    print("Hello world", now)
     # Fetch all active schedules due now or earlier
     active_schedules = NewsletterSchedule.objects.filter(
         is_active=True,
