@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from app.newsletter.models import NewsletterTemplate, NewsletterDraft
+from app.newsletter.models import NewsletterTemplate, NewsletterDraft, NewsletterSchedule
 
 
 class NewsletterTemplateCreateSerializer(serializers.ModelSerializer):
@@ -32,3 +32,8 @@ class NewsletterDraftListDisplaySerializer(serializers.ModelSerializer):
     class Meta:
         model = NewsletterDraft
         fields = ['pk', 'version']
+
+class NewsletterScheduleCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = NewsletterSchedule
+        fields = ['pk', 'draft', 'start_time', 'frequency']

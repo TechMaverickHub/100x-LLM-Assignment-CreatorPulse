@@ -2,7 +2,7 @@ from django.urls import path
 
 from app.newsletter.views import GenerateNewsletterAPIView, GenerateTrendsAPIView, SendNewsletterAPIView, \
     NewsletterTemplateCreateAPIView, NewsletterDraftCreateAPIView, NewsletterDraftDetailAPIView, \
-    NewsletterDraftListAPIView, NewsLetterTemplateListFilterAPIview
+    NewsletterDraftListAPIView, NewsLetterTemplateListFilterAPIview, NewsletterScheduleCreateAPIView
 
 urlpatterns = [
     # Authentication
@@ -21,5 +21,7 @@ urlpatterns = [
 
     path("draft/<int:pk>", NewsletterDraftDetailAPIView.as_view(), name="newsletter-draft-detail"),
 
-    path("draft/list", NewsletterDraftListAPIView.as_view(), name="newsletter-draft-list")
+    path("draft/list", NewsletterDraftListAPIView.as_view(), name="newsletter-draft-list"),
+
+    path("schedule", NewsletterScheduleCreateAPIView.as_view(), name="newsletter-schedule-create"),
 ]

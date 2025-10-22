@@ -5,6 +5,7 @@ from datetime import datetime
 
 import resend
 from django.db import transaction
+from django.utils import timezone
 from dotenv import load_dotenv
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -19,7 +20,8 @@ from app.newsletter.ai_curator import curate_newsletter
 from app.newsletter.email_sender import newsletter_to_html
 from app.newsletter.models import NewsletterTemplate, NewsletterDraft
 from app.newsletter.serializers import NewsletterTemplateCreateSerializer, NewsletterDraftCreateSerializer, \
-    NewsletterDraftDisplaySerializer, NewsletterDraftListDisplaySerializer, NewsletterTemplateDisplaySerializer
+    NewsletterDraftDisplaySerializer, NewsletterDraftListDisplaySerializer, NewsletterTemplateDisplaySerializer, \
+    NewsletterScheduleCreateSerializer
 from app.scrape.scrape_utils import scrape_api_source, scrape_reddit_source, scrape_arxiv_source, scrape_rss_source, \
     get_trends_to_watch
 from app.source.models import Source
@@ -357,6 +359,60 @@ class NewsLetterTemplateListFilterAPIview(ListAPIView):
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
+
+
+class NewsletterScheduleCreateAPIView(GenericAPIView):
+
+    permission_classes = [IsUser]
+
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['draft', 'start_time', 'frequency'],
+            properties={
+                'draft': openapi.Schema(
+                    type=openapi.TYPE_INTEGER,
+                    description='ID of the NewsletterDraft'
+                ),
+                'start_time': openapi.Schema(
+                    type=openapi.FORMAT_DATETIME,
+                    description='Datetime when the newsletter should start sending'
+                ),
+                'frequency': openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description='Frequency of sending',
+                    enum=['once', 'daily', 'weekly', 'monthly']
+                )
+            }
+        )
+    )
+    def post(self, request):
+
+        start_time_str = request.data['start_time']
+        # Check if draft exists and belongs to user
+
+        draft = NewsletterDraft.objects.select_related("newsletter_template", "newsletter_template__user").filter(pk=request.data['draft'], newsletter_template__user_id=request.user.id, newsletter_template__is_active=True).first()
+        if not draft:
+            return get_response_schema({}, ErrorMessage.NOT_FOUND.value, status.HTTP_404_NOT_FOUND)
+
+        try:
+            start_time = datetime.fromisoformat(start_time_str)
+            # If your string has a 'Z' at the end (UTC), remove it or use:
+            # start_time = datetime.fromisoformat(start_time_str.replace("Z", "+00:00"))
+        except ValueError:
+            return get_response_schema({}, ErrorMessage.BAD_REQUEST.value, status.HTTP_400_BAD_REQUEST)
+
+        # Check if frequency is valid
+        if request.data['frequency'] not in ['once', 'daily', 'weekly', 'monthly']:
+            return get_response_schema({}, ErrorMessage.BAD_REQUEST.value, status.HTTP_400_BAD_REQUEST)
+
+        serializer = NewsletterScheduleCreateSerializer(data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return get_response_schema(serializer.data, SuccessMessage.RECORD_CREATED.value, status.HTTP_201_CREATED)
+
+        return get_response_schema(serializer.errors, ErrorMessage.BAD_REQUEST.value, status.HTTP_400_BAD_REQUEST)
 
 
 
