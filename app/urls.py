@@ -49,6 +49,7 @@ urlpatterns = [
     path('api/mail/', include('app.mail.urls')),
     path('api/analytics/', include('app.analytics.urls')),
     path('api/sample/', include('app.sample.urls')),
+    path('api/credit/', include('app.credit.urls')),
 ]
 
 if settings.DEBUG:

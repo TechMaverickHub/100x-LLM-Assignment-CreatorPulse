@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     'app.mail',
     'app.analytics',
     'app.sample',
+    'app.credit',
 ]
 
 MIDDLEWARE = [
