@@ -19,7 +19,7 @@ class NewsletterDraftCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = NewsletterDraft
-        fields = ['pk', 'newsletter_template', 'html_content']
+        fields = ['pk', 'newsletter_template', 'html_content', 'created']
 
 class NewsletterDraftDisplaySerializer(serializers.ModelSerializer):
 

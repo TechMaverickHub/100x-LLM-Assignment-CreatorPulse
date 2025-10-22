@@ -341,7 +341,7 @@ class NewsLetterTemplateListFilterAPIview(ListAPIView):
 
     def get_queryset(self):
 
-        news_letter_template_queryset = NewsletterTemplate.objects.select_related("user").filter(user_id=self.request.user.id, is_active=True).order_by("-created")
+        news_letter_template_queryset = NewsletterTemplate.objects.select_related("user").filter(user_id=self.request.user.id, is_active=True).order_by("-updated")
 
         # Filter by name
         name = self.request.query_params.get("name", None)
