@@ -1,33 +1,45 @@
-# 🌐 Social Media API
+# 🧠 Creator Pulse – An AI-Powered Newsletter System (LLM Assignment)
 
-A fully featured backend REST API built with Django and Django REST Framework, designed for a modern social media platform.
+Creator Pulse is an **AI-driven newsletter automation platform** built using **Django REST Framework**.  
+It curates personalized content, generates styled newsletters, and automates email scheduling — empowering creators to manage topics, styles, and templates with precision.
+
+> 🧩 Built as part of the **100x GenAI Cohort – LLM Engineering Module**
 
 ---
 
 ## 📌 Features
 
-- 👤 User Authentication (JWT)
-- 🔐 Role-based Access Control
-- 🧾 Posts, Comments, Likes, and Follows
-- 📸 Image Upload Support (via Pillow)
-- 📊 Interactive API Docs (Swagger via `drf-yasg`)
-- 🛠️ Debug Tools (`django-debug-toolbar`)
-- 🧪 Modular Structure for Easy Scaling
+### 👤 **User Features**
+- Personalized **Dashboard** showing credits, topics, newsletters, and reading streaks  
+- **Topic Management** – select or deselect topics for curated content  
+- **Source Filtering** – filter sources by name, URL, or source type  
+- **Style Sample Upload** – influence newsletter tone using custom writing samples  
+- **Newsletter Generator** – preview, send, and schedule newsletters (with 10-min cooldown)  
+- **Template & Draft Management** – save newsletters, compare versions with inline diff  
+- **Newsletter History** – view all sent or attempted newsletters with timestamps  
+
+### 🧑‍💼 **Superadmin Features**
+- **Dashboard Analytics** – total users, active sources, sent newsletters  
+- **Quick Actions** – manage users and sources  
+- **System Overview** – active sources, last sent newsletter, system health  
+- **User & Source Management** – activate/deactivate users and add new sources  
 
 ---
 
 ## ⚙️ Tech Stack
 
-| Tool                    | Description                                 |
-|-------------------------|---------------------------------------------|
-| Django 5.2.1            | Web framework                               |
-| Django REST Framework   | API development                             |
-| Simple JWT              | JSON Web Token Authentication               |
-| drf-yasg                | Swagger/OpenAPI schema generator            |
-| Pillow                  | Image handling                              |
-| psycopg2-binary         | PostgreSQL database adapter                 |
-| django-debug-toolbar    | In-browser debugging panel                  |
-| python-dotenv           | Environment variable management             |
+| Tool / Library | Description |
+|----------------|-------------|
+| **Django 5.2.1** | Web framework |
+| **Django REST Framework** | API development |
+| **APScheduler** | Background scheduling and cron jobs |
+| **Simple JWT** | JSON Web Token Authentication |
+| **Resend API** | Transactional email delivery |
+| **psycopg2-binary** | PostgreSQL adapter |
+| **drf-yasg** | Swagger/OpenAPI schema generation |
+| **python-dotenv** | Environment variable management |
+
+> 🖥️ **Frontend Repository:** [Creator Pulse Frontend (React)](https://github.com/TechMaverickHub/100x-LLM-Assignment-CreatorPulse-frontend)
 
 ---
 
@@ -36,9 +48,11 @@ A fully featured backend REST API built with Django and Django REST Framework, d
 ### 🔁 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/social-media-api.git
-cd social-media-api
+git clone https://github.com/TechMaverickHub/100x-LLM-Assignment-CreatorPulse.git
+cd 100x-LLM-Assignment-CreatorPulse
 ```
+
+---
 
 ### 🐍 2. Create a Virtual Environment
 
@@ -52,6 +66,8 @@ python -m venv env
 env\Scripts\activate
 ```
 
+---
+
 ### 📦 3. Install Dependencies
 
 ```bash
@@ -62,15 +78,18 @@ pip install -r requirements.txt
 
 ## 🔐 Environment Setup
 
-Create a `.env` file in the root directory:
+Create a `.env` file in the project root:
 
 ```env
-DATABASE_NAME=your_db_name
-DATABASE_USER=your_db_user
-DATABASE_PASS=your_db_password
-DATABASE_HOST=localhost
-DATABASE_PORT=5432
-DEBUG=True
+DATABASE_NAME=
+DATABASE_USER=
+DATABASE_PASS=
+DATABASE_HOST=
+DATABASE_PORT=
+DEBUG=TRUE
+
+GROQ_API_KEY=
+RESEND_API_KEY=
 ```
 
 ---
@@ -80,9 +99,13 @@ DEBUG=True
 ### 🔧 Make Migrations
 
 ```bash
-python manage.py makemigrations role
 python manage.py makemigrations user
-python manage.py makemigrations post
+python manage.py makemigrations mail
+python manage.py makemigrations newsletter
+python manage.py makemigrations role
+python manage.py makemigrations sample
+python manage.py makemigrations source
+python manage.py makemigrations topic
 ```
 
 ### ⚙️ Apply Migrations
@@ -95,6 +118,8 @@ python manage.py migrate
 
 ```bash
 python manage.py loaddata app/role/fixtures/roles.json
+python manage.py loaddata app/source/fixtures/source_types.json
+python manage.py loaddata app/topic/fixtures/topic.json
 ```
 
 ---
@@ -105,65 +130,36 @@ python manage.py loaddata app/role/fixtures/roles.json
 python manage.py runserver 0.0.0.0:8000
 ```
 
-Access API:
-```
-http://localhost:8000/
-```
+Access the API at:  
+👉 `http://localhost:8000/`
 
 ---
 
 ## 📚 API Documentation
 
-Swagger/OpenAPI docs available at:
-
-```
-http://localhost:8000/swagger/
-```
+Interactive Swagger docs available at:  
+`http://localhost:8000/swagger/`
 
 ---
 
-## 🧰 Developer Tools
+## 🧠 Assignment Context
 
-To view debug info in development:
-
-```
-http://localhost:8000/__debug__/
-```
+This project was developed as part of the **100x GenAI Cohort – LLM Engineering Module**.  
+The objective was to integrate **AI-driven personalization**, **task scheduling**, and **content automation** into a production-grade web system using Django and REST APIs.
 
 ---
 
-## 🔄 Update Packages
+## 🚧 Future Enhancements
 
-To review and update outdated packages:
-
-```bash
-pip-review --local --interactive
-```
-
----
-
-## 📂 Directory Structure
-
-```
-social-media-api/
-├── app/
-│   ├── user/
-│   ├── role/
-│   └── ...
-├── manage.py
-├── requirements.txt
-├── .env
-└── README.md
-```
+- 🤖 Integrate AI summarization and tone adjustment for newsletters  
+- 📈 Add advanced analytics dashboards for open/click rates  
+- 💬 Enable real-time notifications and activity tracking  
+- 🧩 Introduce more user roles (Editor, Subscriber, etc.)  
+- 🎨 Support brand customization and newsletter themes  
 
 ---
 
-## 🤝 Contributing
+## 🧾 License
 
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License.
+This project is part of an educational module and is not licensed for commercial use.  
+For learning purposes only under the **100x GenAI Cohort**.
